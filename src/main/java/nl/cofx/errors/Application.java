@@ -28,40 +28,46 @@ public class Application {
     }
 
     public Future<Void> start() {
-        return Future.all(startFirstServer(), startSecondServer()).mapEmpty();
+        return Future.all(startServerWithoutFailureHandler(), startServerWithFailureHandler()).mapEmpty();
     }
 
-    private Future<Void> startFirstServer() {
+    private Future<Void> startServerWithoutFailureHandler() {
         var router = Router.router(vertx);
 
         router.route("/failWithStatusCode").handler(Application::trigger400);
-        router.errorHandler(400, Application::respondWith400);
+        router.errorHandler(400, Application::respondWith400FromErrorHandler);
 
         return startServer(8080, router);
     }
 
-    private Future<Void> startSecondServer() {
+    private Future<Void> startServerWithFailureHandler() {
         var router = Router.router(vertx);
 
         router.route("/failWithStatusCode").handler(Application::trigger400);
-        router.errorHandler(400, Application::respondWith400);
+        router.errorHandler(400, Application::respondWith400FromErrorHandler);
         router.route().failureHandler(routingContext -> {
-            log.info("Failure handler for status code {}", routingContext.statusCode(), routingContext.failure());
+            log.info("Returning response for {} from failure handler", routingContext.statusCode(), routingContext.failure());
             routingContext.response()
                     .putHeader(CONTENT_TYPE, APPLICATION_JSON)
                     .setStatusCode(routingContext.statusCode())
-                    .end(new JsonObject().put("error", routingContext.statusCode()).toBuffer());
+                    .end(new JsonObject()
+                            .put("error", routingContext.statusCode())
+                            .put("source", "failureHandler")
+                            .toBuffer());
         });
 
         return startServer(8081, router);
     }
 
-    private static void respondWith400(RoutingContext routingContext) {
-        log.info("Returning response for 400");
+    private static void respondWith400FromErrorHandler(RoutingContext routingContext) {
+        log.info("Returning response for 400 from error handler");
         routingContext.response()
                 .putHeader(CONTENT_TYPE, APPLICATION_JSON)
                 .setStatusCode(400)
-                .end(new JsonObject().put("error", "Bad request").toBuffer());
+                .end(new JsonObject()
+                        .put("error", "Bad request")
+                        .put("source", "errorHandler")
+                        .toBuffer());
     }
 
     private static void trigger400(RoutingContext routingContext) {
