@@ -17,13 +17,13 @@ http://localhost:8081/failWithStatusCode to see the expected behavior in case of
 curl http://localhost:8080/failWithStatusCode -v
 ```
 
-In this case, the error handler is invoked once and returns a response.
+In this case, the logs will show that the error handler is invoked once.
 
 ```shell
 curl http://localhost:8081/failWithStatusCode -v
 ```
 
-In this case, the failure handler is invoked once and returns a response.
+In this case, the logs wil show that the failure handler is invoked once.
 
 ## Behavior in case of missing host header
 
