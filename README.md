@@ -2,6 +2,7 @@
 
 This is a small Vert.x application that demonstrates the unexpected (duplicate) invocation of error handlers for 400's
 when a HTTP 1.1 request is sent without the host header.
+The same behavior can be observed for requests without a parth and for requests whose path does not start with a slash in combination with error handlers for 404's.
 
 This application starts two HTTP servers.
 One of those servers listens to requests on port 8080 and has an error handler for requests that lead to 400s.
