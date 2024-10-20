@@ -101,4 +101,27 @@ class ApplicationTest {
                     return null;
                 }).onFailure(vertxTestContext::failNow);
     }
+
+    @Test
+    void returns404CreatedByFailureHandler_givenHttpRequestForPathWithoutSlashPrefix(Vertx vertx, VertxTestContext vertxTestContext) {
+        var netClient = vertx.createNetClient();
+        netClient.connect(8081, "localhost")
+                .map(socket -> {
+                    socket.handler(buffer -> {
+                        log.info("Received {}", buffer);
+
+                        var string = buffer.toString();
+                        vertxTestContext.verify(() -> {
+                            assertThat(string).startsWith("HTTP/1.0 404 Not Found");
+                            assertThat(string).contains("{\"error\":404,\"source\":\"failureHandler\"}");
+                        });
+
+                        vertxTestContext.completeNow();
+                    });
+
+                    socket.write("GET path-without-slash-prefix HTTP/1.0\n\n");
+
+                    return null;
+                }).onFailure(vertxTestContext::failNow);
+    }
 }
